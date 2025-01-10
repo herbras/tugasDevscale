@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  SYSTEM
+  CUSTOM
+}
+
+enum VerificationStatus {
+  INITIAL_REGISTERED
+  EMAIL_VERIFIED
+  PHONE_VERIFIED
+  FULLY_VERIFIED
+}
+
+model User {
+  id                String    @id @default(uuid())
+  defaultRoleId     String?
+  fullName          String
+  position          String?
+  email             String    @unique
+  phoneNumber       String    @unique
+  password          String
+  verificationStatus String    @default("INITIAL_REGISTERED")
+  isActive          Boolean   @default(true)
+  isEmailVerified   Boolean   @default(false)
+  isPhoneVerified   Boolean   @default(false)
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  userRoles         UserRole[]
+  otps             Otp[]
+  blacklistedTokens BlacklistedToken[]
+
+  @@map("user")
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([defaultRoleId])
+}
+
+model Role {
+  id          String    @id @default(uuid())
+  roleType    RoleType
+  name        String    @unique
+  description String?
+  isDefault   Boolean   @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userRoles     UserRole[]
+  rolePrivileges RolePrivilege[]
+
+  @@map("role")
+  @@index([name])
+  @@index([roleType])
+}
+
+model UserRole {
+  id        String    @id @default(uuid())
+  userId    String
+  roleId    String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id])
+  role      Role      @relation(fields: [roleId], references: [id])
+
+  @@map("user_role")
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Privilege {
+  id             String    @id @default(uuid())
+  privilegeName  String    @unique
+  description    String?
+  privilegeGroup PrivilegeGroup
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  rolePrivileges RolePrivilege[]
+
+  @@map("privilege")
+  @@index([privilegeName])
+  @@index([privilegeGroup])
+}
+
+enum PrivilegeGroup {
+  USER_MANAGEMENT
+  ROLE_MANAGEMENT
+  PROFILE
+  SETTINGS
+  SYSTEM
+}
+
+model RolePrivilege {
+  id          String    @id @default(uuid())
+  roleId      String
+  privilegeId String
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  role      Role      @relation(fields: [roleId], references: [id])
+  privilege Privilege @relation(fields: [privilegeId], references: [id])
+
+  @@map("role_privilege")
+}
+
+model Otp {
+  id              String    @id @default(uuid())
+  code            String
+  identifier      String
+  type            String    // EMAIL, PHONE
+  purpose         String    // REGISTRATION, RESET_PASSWORD, LOGIN
+  attempts        Int       @default(0)
+  dailyCount      Int       @default(0)
+  dailyCountReset DateTime?
+  blockedUntil    DateTime  @default(now())
+  expiresAt       DateTime
+  used            Boolean   @default(false)
+  userId          String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@map("otps")
+  @@index([identifier])
+  @@index([type])
+  @@index([purpose])
+  @@index([used])
+}
+
+model BlacklistedToken {
+  id        String   @id @default(uuid())
+  token     String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("blacklisted_tokens")
+  @@index([token])
+  @@index([userId])
+}

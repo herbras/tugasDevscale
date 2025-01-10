@@ -1,0 +1,25 @@
+{
+  "name": "tugas-devscale",
+  "version": "1.0.50",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/jwt": "^1.2.0",
+    "@prisma/client": "^6.2.1",
+    "@types/jsonwebtoken": "^9.0.7",
+    "elysia": "latest",
+    "elysiajs-helmet": "^1.0.2",
+    "graceful-server-elysia": "^1.0.25",
+    "inversify": "3.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "prisma": "^6.2.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/index.js"
+}
